@@ -1,34 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyForm } from "@/components/dashboard/CompanyForm";
 import { JobList } from "@/components/dashboard/JobList";
-import { Button } from "@/components/ui/button";
-import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
     const supabase = await createClient() as any;
 
-    // Use getUser() for authoritative server-side verification
-    // This validates the JWT with Supabase and prevents stale session issues
-    const {
-        data: { user },
-        error: authError
-    } = await supabase.auth.getUser();
-
-    // If no user or auth error, redirect to login
-    if (!user || authError) {
-        console.error("Auth error:", authError);
-        return redirect("/login");
-    }
-
     const { data: company } = await supabase
         .from("companies")
         .select("*")
-        .eq("owner_id", user.id)
-        .single();
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
     const { data: jobs } = company
         ? await supabase
@@ -42,12 +27,6 @@ export default async function DashboardPage() {
         <div className="container mx-auto py-10 px-4">
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold">Recruiter Dashboard</h1>
-                <form action="/auth/signout" method="post">
-                    {/* We can add a signout action later, or just a basic button for now */}
-                    <Button variant="outline" asChild>
-                        <Link href="/api/auth/signout">Sign Out</Link>
-                    </Button>
-                </form>
             </div>
 
             {!company && (

@@ -1,8 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
 import { type NextRequest, NextResponse } from "next/server";
 
+// Legacy sign-out route. With auth removed, just send users back to the dashboard.
 export async function GET(req: NextRequest) {
-    const supabase = await createClient();
-    await supabase.auth.signOut();
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
 }

@@ -5,15 +5,6 @@ import { revalidatePath } from "next/cache";
 
 export async function updateCompany(formData: FormData) {
     const supabase = await createClient() as any;
-    const {
-        data: { user },
-        error: authError
-    } = await supabase.auth.getUser();
-
-    if (!user || authError) {
-        console.error("Authentication failed in updateCompany:", authError);
-        throw new Error(authError?.message || "Unauthorized - Please log in again");
-    }
 
     const name = formData.get("name") as string;
     const slug = formData.get("slug") as string;
@@ -33,11 +24,11 @@ export async function updateCompany(formData: FormData) {
         console.error("Failed to parse content_sections", e);
     }
 
-    // Check if company exists for this user
+    // For the no-auth MVP, we treat this as a single-tenant app and simply
+    // use the first (and only) company row, if it exists.
     const { data: existingCompany } = await supabase
         .from("companies")
         .select("id")
-        .eq("owner_id", user.id)
         .single();
 
     if (existingCompany) {
@@ -55,13 +46,12 @@ export async function updateCompany(formData: FormData) {
         const { error } = await supabase
             .from("companies")
             .update(updates)
-            .eq("owner_id", user.id);
+            .eq("id", existingCompany.id);
 
         if (error) throw new Error(error.message);
     } else {
         // Insert
         const { error } = await supabase.from("companies").insert({
-            owner_id: user.id,
             name,
             slug,
             description,
@@ -79,18 +69,8 @@ export async function updateCompany(formData: FormData) {
 
 export async function createJob(formData: FormData) {
     const supabase = await createClient() as any;
-    const {
-        data: { user },
-        error: authError
-    } = await supabase.auth.getUser();
-
-    if (!user || authError) {
-        console.error("Authentication failed in createJob:", authError);
-        throw new Error(authError?.message || "Unauthorized - Please log in again");
-    }
-
-    // Get company ID
-    const { data: company } = await supabase.from('companies').select('id').eq('owner_id', user.id).single();
+    // Get company ID (single-tenant assumption)
+    const { data: company } = await supabase.from('companies').select('id').limit(1).single();
     if (!company) throw new Error("Company not found");
 
     const title = formData.get("title") as string;
@@ -113,7 +93,7 @@ export async function createJob(formData: FormData) {
 
 export async function deleteJob(jobId: string) {
     const supabase = await createClient() as any;
-    // Policies handle security, but good to be explicit
+    // Single-tenant MVP: allow deleting any job by id.
     const { error } = await supabase.from('jobs').delete().eq('id', jobId);
     if (error) throw new Error(error.message);
     revalidatePath("/dashboard");

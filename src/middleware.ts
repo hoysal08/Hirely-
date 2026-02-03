@@ -1,8 +1,8 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-    return await updateSession(request)
+// Auth has been removed for the MVP, so middleware is now a simple pass-through.
+export function middleware(_request: NextRequest) {
+    return NextResponse.next()
 }
 
 export const config = {
