@@ -10,18 +10,19 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
     const supabase = await createClient() as any;
-    const {
-        data: { session },
-        error: sessionError
-    } = await supabase.auth.getSession();
 
-    // If no session or error, redirect to login
-    if (!session || sessionError) {
-        console.error("Session error:", sessionError);
+    // Use getUser() for authoritative server-side verification
+    // This validates the JWT with Supabase and prevents stale session issues
+    const {
+        data: { user },
+        error: authError
+    } = await supabase.auth.getUser();
+
+    // If no user or auth error, redirect to login
+    if (!user || authError) {
+        console.error("Auth error:", authError);
         return redirect("/login");
     }
-
-    const user = session.user;
 
     const { data: company } = await supabase
         .from("companies")

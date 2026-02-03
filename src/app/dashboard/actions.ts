@@ -7,10 +7,12 @@ export async function updateCompany(formData: FormData) {
     const supabase = await createClient() as any;
     const {
         data: { user },
+        error: authError
     } = await supabase.auth.getUser();
 
-    if (!user) {
-        throw new Error("Unauthorized");
+    if (!user || authError) {
+        console.error("Authentication failed in updateCompany:", authError);
+        throw new Error(authError?.message || "Unauthorized - Please log in again");
     }
 
     const name = formData.get("name") as string;
@@ -77,8 +79,15 @@ export async function updateCompany(formData: FormData) {
 
 export async function createJob(formData: FormData) {
     const supabase = await createClient() as any;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+    const {
+        data: { user },
+        error: authError
+    } = await supabase.auth.getUser();
+
+    if (!user || authError) {
+        console.error("Authentication failed in createJob:", authError);
+        throw new Error(authError?.message || "Unauthorized - Please log in again");
+    }
 
     // Get company ID
     const { data: company } = await supabase.from('companies').select('id').eq('owner_id', user.id).single();
