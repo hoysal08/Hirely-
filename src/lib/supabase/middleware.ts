@@ -54,7 +54,11 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    await supabase.auth.getUser()
+    // IMPORTANT: Use getSession() instead of getUser() to enable automatic token refresh
+    // This prevents the session from expiring prematurely
+    const {
+        data: { session },
+    } = await supabase.auth.getSession()
 
     return response
 }

@@ -14,7 +14,7 @@ export async function importSampleData() {
         throw new Error("Unauthorized");
     }
 
-    // Get company for user
+    // Get company
     const { data: company } = await supabase
         .from("companies")
         .select("id")
@@ -22,36 +22,37 @@ export async function importSampleData() {
         .single();
 
     if (!company) {
-        throw new Error("Company not found. Please create a company profile first.");
+        throw new Error("Company not found");
     }
 
-    // Read CSV file
-    const csvPath = path.join(process.cwd(), "init-data.csv");
-    const fileContent = fs.readFileSync(csvPath, "utf-8");
+    // Read CSV from public directory (works in both dev and production)
+    const csvPath = path.join(process.cwd(), "public", "init-data.csv");
 
-    const records = parse(fileContent, {
+    let csvContent: string;
+    try {
+        csvContent = fs.readFileSync(csvPath, "utf-8");
+    } catch (error) {
+        console.error("Failed to read CSV file:", error);
+        throw new Error("CSV file not found. Please ensure init-data.csv is in the public directory.");
+    }
+
+    const records = parse(csvContent, {
         columns: true,
         skip_empty_lines: true,
     });
 
-    const jobs = records.map((record: any) => ({
+    // Insert jobs
+    const jobsToInsert = records.map((record: any) => ({
         company_id: company.id,
         title: record.title,
         location: record.location,
-        type: `${record.employment_type} - ${record.work_policy}`,
-        description: `
-**Department:** ${record.department}
-**Experience:** ${record.experience_level}
-**Salary:** ${record.salary_range}
-**Posted:** ${record.posted_days_ago}
-
-Join us as a ${record.title} in our ${record.department} team! We are looking for talented individuals to help us grow.
-        `.trim(),
+        type: record.type,
+        description: record.description,
         is_published: true,
     }));
 
     // Insert jobs in batches if needed, but for 150 rows it's fine
-    const { error } = await supabase.from("jobs").insert(jobs);
+    const { error } = await supabase.from("jobs").insert(jobsToInsert);
 
     if (error) {
         console.error("Import Error:", error);
@@ -59,5 +60,5 @@ Join us as a ${record.title} in our ${record.department} team! We are looking fo
     }
 
     revalidatePath("/dashboard");
-    return { success: true, count: jobs.length };
+    return { success: true, count: jobsToInsert.length };
 }
