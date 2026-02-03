@@ -2,12 +2,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+    // 1. Create an unmodified response
     let supabaseResponse = NextResponse.next({
-        request: {
-            headers: request.headers,
-        },
+        request,
     })
 
+    // 2. Create the Supabase client with the standard getAll/setAll pattern
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -17,10 +17,15 @@ export async function updateSession(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
+                    // Sync cookies to the request so getUser() can see them in the same request
                     cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+
+                    // Create a new response to set the cookies
                     supabaseResponse = NextResponse.next({
                         request,
                     })
+
+                    // Sync cookies to the response so they are sent back to the browser
                     cookiesToSet.forEach(({ name, value, options }) =>
                         supabaseResponse.cookies.set(name, value, options)
                     )
@@ -29,25 +34,12 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser()
 
-    // Protected Routes Check
-    if (request.nextUrl.pathname.startsWith('/dashboard')) {
-        if (!user || authError) {
-            const redirectUrl = new URL('/login', request.url)
-            redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
-            return NextResponse.redirect(redirectUrl)
-        }
-    }
-
-    // Auth Pages Check
-    if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup')) {
-        if (user && !authError) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
-        }
+    try {
+        await supabase.auth.getUser()
+    } catch (e) {
+        // Log error but don't crash. Let the page-level auth check handle it.
+        console.error("Middleware Auth Error:", e)
     }
 
     return supabaseResponse
