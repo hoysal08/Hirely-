@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { login, signup } from "./actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,12 +11,22 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/server";
 
-export default function LoginPage({
-    searchParams,
-}: {
-    searchParams: { message: string };
-}) {
+type LoginPageProps = {
+    searchParams: { message?: string };
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+        return redirect("/dashboard");
+    }
+
     return (
         <div className="flex h-screen items-center justify-center bg-gray-50 px-4">
             <Card className="w-full max-w-md">

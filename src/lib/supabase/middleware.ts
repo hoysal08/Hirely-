@@ -1,9 +1,21 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Supabase session middleware
+ *
+ * - Refreshes the Supabase session cookie on every request (GET + POST).
+ * - Uses the official `@supabase/ssr` pattern so cookies are written ONLY on the response.
+ * - Guards `/dashboard` for unauthenticated users on full page loads (GET),
+ *   without interfering with Server Actions / POST requests.
+ */
 export async function updateSession(request: NextRequest) {
-    let supabaseResponse = NextResponse.next({
-        request,
+    // Create a response that we can attach cookies to.
+    // Forward the incoming headers so Supabase can read the auth cookies.
+    const response = NextResponse.next({
+        request: {
+            headers: request.headers,
+        },
     })
 
     const supabase = createServerClient(
@@ -15,29 +27,33 @@ export async function updateSession(request: NextRequest) {
                     return request.cookies.getAll()
                 },
                 setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-                    supabaseResponse = NextResponse.next({
-                        request,
+                    // IMPORTANT: Only mutate the response cookies.
+                    // Mutating `request.cookies` is not supported in the Edge runtime
+                    // and leads to flaky auth (logout on refresh / POST failures).
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        response.cookies.set(name, value, options)
                     })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    )
                 },
             },
         }
     )
 
-    // IMPORTANT: Only refresh for GET requests
-    // This allows the browser to get fresh cookies during page navigation,
-    // but prevents breaking Server Action POST bodies or causing session rotation conflicts.
-    if (request.method === 'GET') {
-        const { data: { user } } = await supabase.auth.getUser()
+    // Trigger a session refresh if needed.
+    const {
+        data: { user },
+    } = await supabase.auth.getUser()
 
-    
-        if (request.nextUrl.pathname.startsWith('/dashboard') && !user) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
+    // Protect dashboard routes on full page loads.
+    // We only redirect on GET so we don't break Server Actions / form POSTs.
+    if (
+        request.nextUrl.pathname.startsWith('/dashboard') &&
+        !user &&
+        request.method === 'GET'
+    ) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
     }
 
-    return supabaseResponse
+    return response
 }
