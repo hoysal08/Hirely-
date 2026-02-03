@@ -11,12 +11,17 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
     const supabase = await createClient() as any;
     const {
-        data: { user },
-    } = await supabase.auth.getUser();
+        data: { session },
+        error: sessionError
+    } = await supabase.auth.getSession();
 
-    if (!user) {
+    // If no session or error, redirect to login
+    if (!session || sessionError) {
+        console.error("Session error:", sessionError);
         return redirect("/login");
     }
+
+    const user = session.user;
 
     const { data: company } = await supabase
         .from("companies")
