@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
 export async function updateCompany(formData: FormData) {
-    const supabase = createClient() as any;
+    const supabase = await createClient() as any;
     const {
         data: { user },
     } = await supabase.auth.getUser();
@@ -76,7 +76,7 @@ export async function updateCompany(formData: FormData) {
 }
 
 export async function createJob(formData: FormData) {
-    const supabase = createClient() as any;
+    const supabase = await createClient() as any;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
@@ -103,7 +103,7 @@ export async function createJob(formData: FormData) {
 }
 
 export async function deleteJob(jobId: string) {
-    const supabase = createClient() as any;
+    const supabase = await createClient() as any;
     // Policies handle security, but good to be explicit
     const { error } = await supabase.from('jobs').delete().eq('id', jobId);
     if (error) throw new Error(error.message);

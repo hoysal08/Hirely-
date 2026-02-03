@@ -6,8 +6,10 @@ import { JobList } from "@/components/dashboard/JobList";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
-    const supabase = createClient() as any;
+    const supabase = await createClient() as any;
     const {
         data: { user },
     } = await supabase.auth.getUser();

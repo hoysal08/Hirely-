@@ -7,7 +7,7 @@ import path from "path";
 import { parse } from "csv-parse/sync";
 
 export async function importSampleData() {
-    const supabase = createClient() as any;
+    const supabase = await createClient() as any;
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

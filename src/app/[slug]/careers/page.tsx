@@ -18,7 +18,11 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 import { createClient as createClientPrimitive } from '@supabase/supabase-js';
 
+
 const supabase = createClientPrimitive(supabaseUrl, supabaseKey) as any;
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
     const { data: company } = await supabase
@@ -87,7 +91,7 @@ export default async function PublicCareersPage({ params }: { params: { slug: st
             </div>
 
             <div className="py-8 -mt-10 relative z-10">
-            
+
                 {company.logo_url && (
                     <div className="container mx-auto px-4 mb-12">
                         <div className="w-32 h-32 relative rounded-xl overflow-hidden border-4 border-white shadow-md bg-white mx-auto md:mx-0">
@@ -101,7 +105,7 @@ export default async function PublicCareersPage({ params }: { params: { slug: st
                     </div>
                 )}
 
-            
+
                 <div className="space-y-4">
                     {sections.map((section: any) => (
                         <SectionRenderer
