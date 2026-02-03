@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Careers Page Builder
 
-## Getting Started
+A Full Stack application that allows recruiters to build branded careers pages and candidates to browse open roles.
 
-First, run the development server:
+## Features
+-   **Recruiter Dashboard:** Manage company details (branding, content) and post/manage jobs.
+-   **Public Careers Page:** Dynamic, SEO-ready pages for each company (`/[slug]/careers`).
+-   **Job Search:** Candidates can filter jobs by location and type.
+-   **Mobile Friendly:** Fully responsive design.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Tech Stack
+-   **Framework:** Next.js 14
+-   **Styling:** Tailwind CSS, Shadcn UI
+-   **Database:** Supabase (PostgreSQL)
+-   **Auth:** Supabase Auth
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup Instructions
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repo-url>
+    cd white-carrot-assignment
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # Note: Requires Node.js 18+ (tested on v18.17.1)
+    ```
 
-## Learn More
+3.  **Configure Environment:**
+    -   Create `.env.local` in the root directory.
+    -   Add your Supabase credentials:
+        ```env
+        NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+        NEXT_PUBLIC_BASE_URL=http://localhost:3000
+        ```
 
-To learn more about Next.js, take a look at the following resources:
+4.  **Database Setup:**
+    -   Run the SQL script located in `supabase/schema.sql` in your Supabase SQL Editor.
+    -   Ensure Email Auth is enabled in Supabase.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5.  **Run Development Server:**
+    ```bash
+    npm run dev
+    ```
+    Open [http://localhost:3000](http://localhost:3000).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Usage Guide
+1.  **Recruiter:**
+    -   Sign up at `/login`.
+    -   Go to the **Company Profile** tab to set your company name, slug (e.g., `my-company`), and branding.
+    -   Go to the **Jobs** tab to post new openings.
+2.  **Candidate:**
+    -   Visit `http://localhost:3000/my-company/careers` to see the public page.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Testing
+-   Run `npm run build` to verify production build.
+-   The app is designed to be mobile-first using Tailwind's responsive utilities.
